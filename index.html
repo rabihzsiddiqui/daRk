@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>daRk.</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #050505;
+      color: #f5f5f5;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at center, #161616 0, #050505 58%);
+      overflow: hidden;
+    }
+
+    main {
+      width: min(92vw, 420px);
+      text-align: center;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(3rem, 13vw, 6.5rem);
+      font-weight: 720;
+      letter-spacing: 0;
+      line-height: 0.95;
+    }
+
+    p {
+      margin: 0 auto 28px;
+      color: #cfcfcf;
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid #ededed;
+      border-radius: 8px;
+      background: #f5f5f5;
+      color: #050505;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      padding: 13px 20px;
+      min-width: 132px;
+    }
+
+    button:focus-visible {
+      outline: 3px solid #8ab4ff;
+      outline-offset: 4px;
+    }
+
+    #dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1px;
+      height: 1px;
+      pointer-events: none;
+      background: #0a0a0a;
+      opacity: 0;
+      transform: translate3d(7vw, 11vh, 0);
+    }
+
+    body.dark {
+      /* Pure black minimizes OLED emitter use and removes bright static UI. */
+      background: #000000;
+      cursor: none;
+    }
+
+    body.dark main { display: none; }
+
+    body.dark #dot {
+      /* A barely visible moving pixel avoids leaving every pixel perfectly static. */
+      opacity: 1;
+      animation: drift 60s linear infinite;
+    }
+
+    @keyframes drift {
+      0% { transform: translate3d(7vw, 11vh, 0); }
+      22% { transform: translate3d(82vw, 19vh, 0); }
+      47% { transform: translate3d(69vw, 78vh, 0); }
+      73% { transform: translate3d(18vw, 64vh, 0); }
+      100% { transform: translate3d(7vw, 11vh, 0); }
+    }
+  </style>
+</head>
+<body>
+  <main aria-labelledby="title">
+    <h1 id="title">daRk.</h1>
+    <p>A tiny fullscreen black screen to reduce OLED wear when you need a display awake but visually idle.</p>
+    <button id="start" type="button">go daRk</button>
+  </main>
+  <div id="dot" aria-hidden="true"></div>
+
+  <script>
+    const startButton = document.getElementById("start");
+    let wakeLock = null;
+    let active = false;
+    let ignoreClickUntil = 0;
+
+    async function requestWakeLock() {
+      if (!("wakeLock" in navigator)) return;
+      try {
+        // Wake Lock keeps the black panel on instead of letting the display sleep.
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => {
+          wakeLock = null;
+        }, { once: true });
+      } catch {
+        wakeLock = null;
+      }
+    }
+
+    async function releaseWakeLock() {
+      const lock = wakeLock;
+      wakeLock = null;
+      if (lock) {
+        try { await lock.release(); } catch {}
+      }
+    }
+
+    async function goDark(event) {
+      event.stopPropagation();
+      active = true;
+      ignoreClickUntil = performance.now() + 350;
+      document.body.classList.add("dark");
+      // Fullscreen removes browser chrome and other static UI that could linger.
+      try { await document.documentElement.requestFullscreen(); } catch {}
+      await requestWakeLock();
+    }
+
+    async function exitDark(options = {}) {
+      if (!active) return;
+      active = false;
+      document.body.classList.remove("dark");
+      await releaseWakeLock();
+      if (!options.skipFullscreen && document.fullscreenElement) {
+        try { await document.exitFullscreen(); } catch {}
+      }
+    }
+
+    startButton.addEventListener("click", goDark);
+
+    document.addEventListener("click", () => {
+      if (active && performance.now() > ignoreClickUntil) exitDark();
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") exitDark();
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      if (active && !document.fullscreenElement) exitDark({ skipFullscreen: true });
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (active && document.visibilityState === "visible" && !wakeLock) {
+        requestWakeLock();
+      }
+    });
+  </script>
+</body>
+</html>
