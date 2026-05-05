@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>daRk.</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=VT323&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #050505;
-      color: #f5f5f5;
+      --phosphor: #ffb000;
+      --muted: rgba(255, 176, 0, 0.48);
+      font-family: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+      background: #0a0a0a;
+      color: var(--phosphor);
     }
 
     * { box-sizing: border-box; }
@@ -22,49 +27,111 @@
     }
 
     body {
-      display: grid;
-      place-items: center;
-      background: radial-gradient(circle at center, #161616 0, #050505 58%);
+      background:
+        radial-gradient(circle at 33% 40%, rgba(255, 176, 0, 0.06), transparent 24rem),
+        radial-gradient(circle at center, transparent 0, rgba(0, 0, 0, 0.44) 74%),
+        #0a0a0a;
       overflow: hidden;
     }
 
+    body:not(.dark) {
+      animation: crt-flicker 4.7s infinite;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 176, 0, 0.04) 0,
+        rgba(255, 176, 0, 0.04) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+    }
+
     main {
-      width: min(92vw, 420px);
-      text-align: center;
-      padding: 24px;
+      position: fixed;
+      top: 40vh;
+      left: 33vw;
+      width: min(56vw, 520px);
+      padding: 0;
+      transform: translateY(-38%);
+      text-align: left;
     }
 
     h1 {
-      margin: 0 0 14px;
-      font-size: clamp(3rem, 13vw, 6.5rem);
-      font-weight: 720;
+      margin: 2px 0 8px;
+      font-family: "VT323", ui-monospace, monospace;
+      font-size: clamp(5.4rem, 17vw, 12rem);
+      font-weight: 400;
       letter-spacing: 0;
-      line-height: 0.95;
+      line-height: 0.74;
+      text-shadow:
+        0 0 7px rgba(255, 176, 0, 0.62),
+        0 0 22px rgba(255, 176, 0, 0.2);
     }
 
     p {
-      margin: 0 auto 28px;
-      color: #cfcfcf;
-      font-size: 1rem;
-      line-height: 1.55;
+      margin: 0 0 30px;
+      max-width: 38ch;
+      color: rgba(255, 176, 0, 0.8);
+      font-size: clamp(0.9rem, 1.35vw, 1rem);
+      line-height: 1.6;
+      text-transform: lowercase;
     }
 
     button {
       appearance: none;
-      border: 1px solid #ededed;
-      border-radius: 8px;
-      background: #f5f5f5;
-      color: #050505;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--phosphor);
       cursor: pointer;
       font: inherit;
-      font-weight: 700;
-      padding: 13px 20px;
-      min-width: 132px;
+      font-weight: 600;
+      padding: 1px 4px;
+      margin: 0 0 0 8px;
+      min-width: 0;
+      text-transform: lowercase;
     }
 
+    button:hover,
     button:focus-visible {
-      outline: 3px solid #8ab4ff;
-      outline-offset: 4px;
+      background: var(--phosphor);
+      color: #0a0a0a;
+      outline: 0;
+    }
+
+    .status,
+    footer {
+      color: var(--muted);
+      font-size: clamp(0.72rem, 1vw, 0.78rem);
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .prompt {
+      display: flex;
+      align-items: baseline;
+      color: var(--phosphor);
+      font-size: clamp(1rem, 1.5vw, 1.15rem);
+    }
+
+    .cursor {
+      display: inline-block;
+      margin-left: 3px;
+      animation: blink 1.05s steps(1, end) infinite;
+    }
+
+    footer {
+      position: fixed;
+      left: 24px;
+      right: 24px;
+      bottom: 18px;
     }
 
     #dot {
@@ -83,9 +150,12 @@
       /* Pure black minimizes OLED emitter use and removes bright static UI. */
       background: #000000;
       cursor: none;
+      animation: none;
     }
 
-    body.dark main { display: none; }
+    body.dark main,
+    body.dark footer,
+    body.dark::before { display: none; }
 
     body.dark #dot {
       /* A barely visible moving pixel avoids leaving every pixel perfectly static. */
@@ -100,21 +170,59 @@
       73% { transform: translate3d(18vw, 64vh, 0); }
       100% { transform: translate3d(7vw, 11vh, 0); }
     }
+
+    @keyframes blink {
+      0%, 45% { opacity: 1; }
+      46%, 100% { opacity: 0; }
+    }
+
+    @keyframes crt-flicker {
+      0%, 100% { opacity: 1; }
+      17% { opacity: 0.985; }
+      31% { opacity: 1; }
+      46% { opacity: 0.972; }
+      53% { opacity: 0.996; }
+      69% { opacity: 0.98; }
+      84% { opacity: 1; }
+    }
+
+    @media (max-width: 700px) {
+      main {
+        left: 24px;
+        right: 24px;
+        width: auto;
+      }
+    }
   </style>
 </head>
 <body>
   <main aria-labelledby="title">
-    <h1 id="title">daRk.</h1>
-    <p>A tiny fullscreen black screen to reduce OLED wear when you need a display awake but visually idle.</p>
-    <button id="start" type="button">go daRk</button>
+    <div class="status">OLED PROTECTION UTILITY / v0.1 / READY</div>
+    <h1 id="title">daRk</h1>
+    <p>keeps your display awake without burning anything in.</p>
+    <div class="prompt" aria-label="terminal command">
+      <span aria-hidden="true">&gt;</span>
+      <button id="start" type="button">[ engage ]</button>
+      <span class="cursor" aria-hidden="true">_</span>
+    </div>
   </main>
+  <footer id="capabilities">wake_lock: checking  fullscreen: checking  esc to exit</footer>
   <div id="dot" aria-hidden="true"></div>
 
   <script>
     const startButton = document.getElementById("start");
+    const capabilities = document.getElementById("capabilities");
     let wakeLock = null;
     let active = false;
     let ignoreClickUntil = 0;
+
+    function setCapabilityStatus() {
+      const wake = "wakeLock" in navigator ? "supported" : "unsupported";
+      const fullscreen = document.fullscreenEnabled && document.documentElement.requestFullscreen
+        ? "supported"
+        : "unsupported";
+      capabilities.textContent = `wake_lock: ${wake}  fullscreen: ${fullscreen}  esc to exit`;
+    }
 
     async function requestWakeLock() {
       if (!("wakeLock" in navigator)) return;
@@ -176,6 +284,8 @@
         requestWakeLock();
       }
     });
+
+    setCapabilityStatus();
   </script>
 </body>
 </html>
