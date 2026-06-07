@@ -12,17 +12,3 @@ daRk is a single-file OLED burn-in helper. It shows a minimal landing page, then
 - Escape or click exits the mode, releases Wake Lock, restores the cursor, and returns to the landing page.
 
 Wake Lock support depends on the browser. If the browser releases it, daRk tries to re-acquire it when the tab becomes visible again.
-
-## Run Locally
-
-From this folder:
-
-```sh
-python3 -m http.server
-```
-
-Then open:
-
-```text
-http://localhost:8000
-```
